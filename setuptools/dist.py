@@ -329,9 +329,7 @@ class Distribution(_Distribution):
             for key in vars(self.metadata)
             if getattr(self.metadata, key, None) is not None
         }
-        missing = required - provided
-
-        if missing:
+        if missing := required - provided:
             msg = f"Required package metadata is missing: {missing}"
             raise DistutilsSetupError(msg)
 
@@ -397,9 +395,7 @@ class Distribution(_Distribution):
 
         if self.extras_require:
             for extra in self.extras_require.keys():
-                # Setuptools allows a weird "<name>:<env markers> syntax for extras
-                extra = extra.split(':')[0]
-                if extra:
+                if extra := extra.split(':')[0]:
                     self.metadata.provides_extras.add(extra)
 
     def _normalize_requires(self):
@@ -592,7 +588,7 @@ class Distribution(_Distribution):
         return lowercase_opt
 
     # FIXME: 'Distribution._set_command_options' is too complex (14)
-    def _set_command_options(self, command_obj, option_dict=None):  # noqa: C901
+    def _set_command_options(self, command_obj, option_dict=None):    # noqa: C901
         """
         Set the options for 'command_obj' from 'option_dict'.  Basically
         this means copying elements of a dictionary ('option_dict') to
@@ -609,10 +605,10 @@ class Distribution(_Distribution):
             option_dict = self.get_option_dict(command_name)
 
         if DEBUG:
-            self.announce("  setting options for '%s' command:" % command_name)
+            self.announce(f"  setting options for '{command_name}' command:")
         for option, (source, value) in option_dict.items():
             if DEBUG:
-                self.announce("    %s = %s (from %s)" % (option, value, source))
+                self.announce(f"    {option} = {value} (from {source})")
             try:
                 bool_opts = [translate_longopt(o) for o in command_obj.boolean_options]
             except AttributeError:
@@ -632,8 +628,7 @@ class Distribution(_Distribution):
                     setattr(command_obj, option, value)
                 else:
                     raise DistutilsOptionError(
-                        "error in %s: command '%s' has no such option '%s'"
-                        % (source, command_name, option)
+                        f"error in {source}: command '{command_name}' has no such option '{option}'"
                     )
             except ValueError as e:
                 raise DistutilsOptionError(e) from e
@@ -780,8 +775,7 @@ class Distribution(_Distribution):
         handle whatever special inclusion logic is needed.
         """
         for k, v in attrs.items():
-            include = getattr(self, '_include_' + k, None)
-            if include:
+            if include := getattr(self, f'_include_{k}', None):
                 include(v)
             else:
                 self._include_misc(k, v)
@@ -789,7 +783,7 @@ class Distribution(_Distribution):
     def exclude_package(self, package):
         """Remove packages, modules, and extensions in named package"""
 
-        pfx = package + '.'
+        pfx = f'{package}.'
         if self.packages:
             self.packages = [
                 p for p in self.packages if p != package and not p.startswith(pfx)
@@ -810,7 +804,7 @@ class Distribution(_Distribution):
     def has_contents_for(self, package):
         """Return true if 'exclude_package(package)' would do something"""
 
-        pfx = package + '.'
+        pfx = f'{package}.'
 
         for p in self.iter_distribution_names():
             if p == package or p.startswith(pfx):
@@ -825,10 +819,10 @@ class Distribution(_Distribution):
         try:
             old = getattr(self, name)
         except AttributeError as e:
-            raise DistutilsSetupError("%s: No such distribution setting" % name) from e
+            raise DistutilsSetupError(f"{name}: No such distribution setting") from e
         if old is not None and not isinstance(old, sequence):
             raise DistutilsSetupError(
-                name + ": this setting cannot be changed via include/exclude"
+                f"{name}: this setting cannot be changed via include/exclude"
             )
         elif old:
             setattr(self, name, [item for item in old if item not in value])
@@ -841,12 +835,12 @@ class Distribution(_Distribution):
         try:
             old = getattr(self, name)
         except AttributeError as e:
-            raise DistutilsSetupError("%s: No such distribution setting" % name) from e
+            raise DistutilsSetupError(f"{name}: No such distribution setting") from e
         if old is None:
             setattr(self, name, value)
         elif not isinstance(old, sequence):
             raise DistutilsSetupError(
-                name + ": this setting cannot be changed via include/exclude"
+                f"{name}: this setting cannot be changed via include/exclude"
             )
         else:
             new = [item for item in value if item not in old]
@@ -869,8 +863,7 @@ class Distribution(_Distribution):
         handle whatever special exclusion logic is needed.
         """
         for k, v in attrs.items():
-            exclude = getattr(self, '_exclude_' + k, None)
-            if exclude:
+            if exclude := getattr(self, f'_exclude_{k}', None):
                 exclude(v)
             else:
                 self._exclude_misc(k, v)
@@ -950,12 +943,8 @@ class Distribution(_Distribution):
     def iter_distribution_names(self):
         """Yield all packages, modules, and extension names in distribution"""
 
-        for pkg in self.packages or ():
-            yield pkg
-
-        for module in self.py_modules or ():
-            yield module
-
+        yield from self.packages or ()
+        yield from self.py_modules or ()
         for ext in self.ext_modules or ():
             if isinstance(ext, tuple):
                 name, buildinfo = ext

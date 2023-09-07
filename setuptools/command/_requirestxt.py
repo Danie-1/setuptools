@@ -72,20 +72,19 @@ def _move_install_requirements_markers(
     simple_install_requires = list(map(str, simple_reqs))
 
     for r in complex_reqs:
-        extras_require[':' + str(r.marker)].setdefault(r)
+        extras_require[f':{str(r.marker)}'].setdefault(r)
 
-    expanded_extras = dict(
-        # list(dict.fromkeys(...))  ensures a list of unique strings
-        (k, list(dict.fromkeys(str(r) for r in map(_clean_req, v))))
+    expanded_extras = {
+        k: list(dict.fromkeys(str(r) for r in map(_clean_req, v)))
         for k, v in extras_require.items()
-    )
+    }
 
     return simple_install_requires, expanded_extras
 
 
 def _suffix_for(req):
     """Return the 'extras_require' suffix for a given requirement."""
-    return ':' + str(req.marker) if req.marker else ''
+    return f':{str(req.marker)}' if req.marker else ''
 
 
 def _clean_req(req):
